@@ -139,10 +139,10 @@ impl UIContext {
         let mut className = Rc::from("");
         let mut title = Rc::from("");
         let mut renderer = Rc::from("");
-        let mut posX = 0;
-        let mut posY = 0;
-        let mut height = 0;
-        let mut width = 0;
+        let mut posX = Win::CW_USEDEFAULT;
+        let mut posY = Win::CW_USEDEFAULT;
+        let mut height = Win::CW_USEDEFAULT;
+        let mut width = Win::CW_USEDEFAULT;
         let mut idx = 0;
         let mut dock = 0;
         let mut isSelected = false;
@@ -206,10 +206,12 @@ impl UIContext {
                 if &*renderer == "group-box" {
                     Win::SetDefaultWindowProc(hwnd);
                 }
-                AnchorMap::shared().lock().as_mut().ok().map(|am|am.addControl(
-                    idx, dock, Some(hwnd)
-                ));
-
+                AnchorMap::shared().lock().as_mut().ok().and_then(|am|{
+                    am.addControl(idx, dock, Some(hwnd));
+                    let rect = Win::GetWindowRect(am.parent);
+                    am.handleAnchors(rect)
+                });
+                
                 hwnd
             }
         };

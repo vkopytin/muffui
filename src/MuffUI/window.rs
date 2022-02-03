@@ -3,9 +3,9 @@
 use std::sync::Arc;
 use std::rc::Rc;
 use std::sync::Mutex;
-use crate::Win;
 use crate::muffui::*;
 use SharedProps::*;
+use crate::Win;
 
 pub struct Window {
     pub children: Option<Rc<dyn Renderable>>,

@@ -5,16 +5,20 @@ use windows::{
     core::*,
 };
 
-mod Win;
+mod main_vm;
 mod muffui;
 
+use crate::muffui::win as Win;
 use std::rc::Rc;
+use std::sync::Arc;
 use std::cell::RefCell;
 use crate::muffui::*;
 use SharedProps::*;
+use crate::main_vm::MainViewModel;
 
 
 pub struct MyView {
+    vm: Arc<MainViewModel>,
     title: Rc<RefCell<String>>,
     index: Rc<RefCell<isize>>,
     text: Rc<RefCell<String>>,
@@ -28,6 +32,7 @@ pub struct MyView {
 impl MyView {
     pub fn new() -> Self {
         Self {
+            vm: MainViewModel::shared(),
             index: Default::default(),
             title: Rc::new(RefCell::new(String::from("test"))),
             text: Rc::new(RefCell::new(String::from("edit text"))),
@@ -49,27 +54,53 @@ impl Renderable for MyView {
         let selectedText: &str = &self.selectedText.borrow();
         let selectedIndex: &usize = &self.selectedIndex.borrow();
         let checkedItem1: &bool = &self.checkedItem1.borrow();
+        let newTitle: &str = &self.vm.newTitle.borrow();
 
         Some(Rc::from(Window::new([
-            SP::ClassName("window#1"), ControlId(0), Anchor(ANF_NONE), SP::Title("window title"), SP::FontFace("Tahoma"),
-            Width(410), Height(410)
+            SP::ClassName("window#1"), ControlId(0), Anchor(ANF_NONE), SP::Title("TODO: Example"), SP::FontFace("Tahoma"),
+            Width(500), Height(610)
         ]).didResize({
             let debugInfo = Rc::clone(&self.debugInfo);
             move|props|{
                 let mut debugInfo = debugInfo.borrow_mut();
                 *debugInfo = String::from(format!("{:?}", props));
         }}).content(||(
-            Panel::new([SP::Title("testing title"), ControlId(103), Anchor(ANF_TOP|ANF_LEFT|ANF_RIGHT)]).posX(4).posY(4).width(385).height(35).content(||(
-                CheckBox::new([SP::Title(text), ControlId(102), Anchor(ANF_TOP|ANF_LEFT), SP::FontFace(text)]).posX(5).posY(5).width(120).height(25).content(Command::new({
+            Panel::new([SP::Title("create new todo"), ControlId(103), Anchor(ANF_TOP|ANF_LEFTRIGHT)]).posX(4).posY(4).width(475).height(35).content(||(
+                CheckBox::new([SP::Title("Mark All"), ControlId(102), Anchor(ANF_TOP|ANF_LEFT)]).posX(5).posY(5).width(70).height(25).content(Command::new({
                     move|event: Vec<SharedProps>| {
 
                     }
                 }))
                 ,
-                TextBox::new([ControlId(201)]).posX(140).width(240)
+                Label::new([SP::Title("New todo title:")]).posX(76).posY(9).width(120).height(25)
+                ,
+                TextBox::new([ControlId(201), Anchor(ANF_TOP| ANF_LEFTRIGHT)]).title(newTitle).posX(160).posY(6).width(240).height(21).content({
+                    let newTitle = Rc::clone(&self.vm.newTitle);
+                    move|event: Vec<SharedProps>|{
+                        let mut newTitle = newTitle.borrow_mut();
+                        if let Some(Title(v)) = event.prop(&SP::Title("")) {
+                            *newTitle = v.to_string();
+                        }
+                    }
+                })
+                ,
+                Button::new([SP::Title("Save"), ControlId(202), Anchor(ANF_TOP|ANF_RIGHT)]).posX(406).posY(4).width(40).height(24).content({
+                    let vm = self.vm.clone();
+                    move|_|{
+                        vm.createToDo();
+                    }
+                })
             ))
             ,
-            Panel::new([SP::Title("testing title"), ControlId(104), Anchor(ANF_TOP|ANF_LEFT|ANF_BOTTOM|ANF_RIGHT)]).posX(4).posY(40).width(385).height(300).content(||(
+            ForEach(self.vm.items.borrow().iter().map(|i|i.clone()).collect::<Vec<_>>(), |item, index|(
+                Panel::new([ControlId(300 + index), Anchor(ANF_LEFTRIGHT|ANF_TOP)]).posX(4).posY(45 + index * 29).height(27).width(400).content(||(
+                    CheckBox::new([SP::Title("Complete"), ControlId(400 + index), Anchor(ANF_TOP|ANF_LEFT)]).posX(4).width(80).posY(1).height(24)
+                    ,
+                    TextBox::new([SP::Title(item.as_str()), ControlId(400 + 2 * index), Anchor(ANF_TOP|ANF_LEFTRIGHT)]).posX(85).posY(1).width(200).height(24)
+                ))
+            ))
+            ,
+            Panel::new([SP::Title("testing title"), ControlId(104), Anchor(ANF_LEFT|ANF_BOTTOM|ANF_RIGHT)]).posX(4).posY(240).width(385).height(300).content(||(
                 Label::new([SP::Title("testing label"), ControlId(105), Anchor(ANF_TOP|ANF_LEFT), SP::FontFace("Monaco")]).posX(5).posY(5).width(125).height(25)
                 ,
                 Button::new([SP::Title(title), ControlId(106), Anchor(ANF_TOP|ANF_LEFT)]).posX(120).posY(5).width(65).height(25).content({
@@ -85,7 +116,7 @@ impl Renderable for MyView {
                         *debugInfo = String::from(format!("Click: {}!!!!", title));
                 }})
                 ,
-                GroupBox::new([SP::Title("group box"), ControlId(107), Anchor(ANF_TOP|ANF_LEFT|ANF_BOTTOM|ANF_RIGHT)]).posX(5).posY(40).width(300).height(200).content(||(
+                GroupBox::new([SP::Title("group box"), ControlId(107), Anchor(ANF_TOP|ANF_LEFT|ANF_RIGHT)]).posX(5).posY(40).width(300).height(200).content(||(
                     Label::new([SP::Title("Text box:"), ControlId(108), Anchor(ANF_TOP|ANF_LEFT)]).posX(6).posY(20).width(75).height(25),
                     TextBox::new([SP::Title(text), ControlId(109), Anchor(ANF_TOP|ANF_LEFTRIGHT)]).posX(85).posY(20).width(120).height(25).content({
                         let text = Rc::clone(&self.text);
@@ -146,7 +177,7 @@ impl Renderable for MyView {
                 ,
             ))
             ,
-            Label::new([SP::Title(debugInfo), Anchor(ANF_BOTTOM|ANF_LEFTRIGHT), ControlId(115), SP::FontFace(text)]).posX(4).posY(350).width(1024).height(25)
+            Label::new([SP::Title(debugInfo), Anchor(ANF_BOTTOM|ANF_LEFTRIGHT), ControlId(115), SP::FontFace(text)]).posX(4).posY(550).width(1024).height(25)
         ))))
     }
 }

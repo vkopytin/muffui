@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+extern crate self as Win;
 
 use core::ffi::c_void;
 pub use windows::{

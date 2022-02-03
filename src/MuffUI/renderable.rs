@@ -100,60 +100,73 @@ impl<A: Renderable, B: Renderable, C: Renderable, D: Renderable, E: Renderable, 
 
 impl<A: Renderable, B: Renderable, C: Renderable, D: Renderable, E: Renderable, F: Renderable, G: Renderable> Renderable for ContentArgs<A, B, C, D, E, F, G> {
     fn childs(&self) -> Option<Rc<dyn Renderable>> {
-        match self {
-            ContentArgs::SevenArgs(_, _, _, _, _, _, _) => None,
-            ContentArgs::SixArgs(_, _, _, _, _, _) => None,
-            ContentArgs::FiveArgs(_, _, _, _, _) => None,
-            ContentArgs::FourArgs(_, _, _, _) => None,
-            ContentArgs::ThreeArgs(_, _, _) => None,
-            ContentArgs::TwoArgs(_, _) => None,
-            ContentArgs::OneArg(a) => a.childs(),
-        }
+        None
     }
     fn render(&self, context: Box<UIContext>, parent: &str, index: &str, msg: Option<Win::MSG>) -> Box<UIContext> {
         match self {
             ContentArgs::SevenArgs(a, b, c, d, e, f, g) => {
-                let context = a.render(context, parent, &format!("{}:1", index), msg);
-                let context = b.render(context, parent, &format!("{}:2", index), msg);
-                let context = c.render(context, parent, &format!("{}:3", index), msg);
-                let context = d.render(context, parent, &format!("{}:4", index), msg);
-                let context = e.render(context, parent, &format!("{}:5", index), msg);
-                let context = f.render(context, parent, &format!("{}:6", index), msg);
-                g.render(context, parent, &format!("{}:7", index), msg)
+                let context = a.render(context, parent, &format!("{}_1", index), msg);
+                let context = b.render(context, parent, &format!("{}_2", index), msg);
+                let context = c.render(context, parent, &format!("{}_3", index), msg);
+                let context = d.render(context, parent, &format!("{}_4", index), msg);
+                let context = e.render(context, parent, &format!("{}_5", index), msg);
+                let context = f.render(context, parent, &format!("{}_6", index), msg);
+                g.render(context, parent, &format!("{}_7", index), msg)
             },
             ContentArgs::SixArgs(a, b, c, d, e, f) => {
-                let context = a.render(context, parent, &format!("{}:1", index), msg);
-                let context = b.render(context, parent, &format!("{}:2", index), msg);
-                let context = c.render(context, parent, &format!("{}:3", index), msg);
-                let context = d.render(context, parent, &format!("{}:4", index), msg);
-                let context = e.render(context, parent, &format!("{}:5", index), msg);
-                f.render(context, parent, &format!("{}:6", index), msg)
+                let context = a.render(context, parent, &format!("{}_1", index), msg);
+                let context = b.render(context, parent, &format!("{}_2", index), msg);
+                let context = c.render(context, parent, &format!("{}_3", index), msg);
+                let context = d.render(context, parent, &format!("{}_4", index), msg);
+                let context = e.render(context, parent, &format!("{}_5", index), msg);
+                f.render(context, parent, &format!("{}_6", index), msg)
             },
             ContentArgs::FiveArgs(a, b, c, d, e) => {
-                let context = a.render(context, parent, &format!("{}:1", index), msg);
-                let context = b.render(context, parent, &format!("{}:2", index), msg);
-                let context = c.render(context, parent, &format!("{}:3", index), msg);
-                let context = d.render(context, parent, &format!("{}:4", index), msg);
-                e.render(context, parent, &format!("{}:5", index), msg)
+                let context = a.render(context, parent, &format!("{}_1", index), msg);
+                let context = b.render(context, parent, &format!("{}_2", index), msg);
+                let context = c.render(context, parent, &format!("{}_3", index), msg);
+                let context = d.render(context, parent, &format!("{}_4", index), msg);
+                e.render(context, parent, &format!("{}_5", index), msg)
             },
             ContentArgs::FourArgs(a, b, c, d) => {
-                let context = a.render(context, parent, &format!("{}:1", index), msg);
-                let context = b.render(context, parent, &format!("{}:2", index), msg);
-                let context = c.render(context, parent, &format!("{}:3", index), msg);
-                d.render(context, parent, &format!("{}:4", index), msg)
+                let context = a.render(context, parent, &format!("{}_1", index), msg);
+                let context = b.render(context, parent, &format!("{}_2", index), msg);
+                let context = c.render(context, parent, &format!("{}_3", index), msg);
+                d.render(context, parent, &format!("{}_4", index), msg)
             },
             ContentArgs::ThreeArgs(a, b, c) => {
-                let context = a.render(context, parent, &format!("{}:1", index), msg);
-                let context = b.render(context, parent, &format!("{}:2", index), msg);
+                let context = a.render(context, parent, &format!("{}_1", index), msg);
+                let context = b.render(context, parent, &format!("{}_2", index), msg);
                 c.render(context, parent, &format!("{}:3", index), msg)
             },
             ContentArgs::TwoArgs(a, b) => {
-                let context = a.render(context, parent, &format!("{}:1", index), msg);
-                b.render(context, parent, &format!("{}:2", index), msg)
+                let context = a.render(context, parent, &format!("{}_1", index), msg);
+                b.render(context, parent, &format!("{}_2", index), msg)
             },
-            ContentArgs::OneArg(a) => a.render(context, parent, &format!("{}:1", index), msg),
+            ContentArgs::OneArg(a) => a.render(context, parent, &format!("{}_1", index), msg),
         }
     }
+    fn toViewState(&self) -> Vec<SharedProps> {
+        vec![]
+    }
+}
+
+pub struct ForEach<T, R: Renderable, F: Fn(&T, i32) -> R>(pub Vec<T>, pub F);
+
+impl<T, R: Renderable, F: Fn(&T, i32) -> R> Renderable for ForEach<T, R, F> {
+    fn childs(&self) -> Option<Rc<dyn Renderable>> {
+        None
+    }
+
+    fn render(&self, context: Box<UIContext>, parent: &str, index: &str, msg: Option<Win::MSG>) -> Box<UIContext> {
+        let mut idx = 0;
+        self.0.iter().fold(context, |res, item|{
+            let children = self.1(item, idx);
+            idx += 1;
+            children.render(res, parent, &format!("{}[{}]", index, idx), msg)
+        })
+    }
+
     fn toViewState(&self) -> Vec<SharedProps> {
         vec![]
     }

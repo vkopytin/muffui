@@ -120,7 +120,7 @@ pub struct AnchorMap {
     client: Win::RECT,
     sizedBorders: usize,
     delta: Win::SIZE,
-    parent: Win::HWND,
+    pub parent: Win::HWND,
     count: i32,
     controls: Vec<ControlEntry>,
     defaultEntry: bool,
@@ -173,12 +173,24 @@ impl AnchorMap {
             self.defaultEntry = true;
             self.defaultFlags = flags;
         } else {
-            let entry = ControlEntry {
+            let mut entry = ControlEntry {
                 controlId,
                 flags,
                 rect: FRECT { left: 0f32, top: 0f32, right: 0f32, bottom: 0f32 },
                 hwnd: hwnd.unwrap_or(Win::HWND(0)),
             };
+
+            if let Some(hwnd) = hwnd {
+                if let Some(rect) = Win::GetWindowRect(hwnd) {
+                    let parent = Win::GetParent(hwnd);
+                    if let Some(rect) = AnchorMap::ScreenToClient(parent, &rect) {
+                        entry.rect.left = rect.left as _;
+                        entry.rect.top = rect.top as _;
+                        entry.rect.right = rect.right as _;
+                        entry.rect.bottom = rect.bottom as _;
+                    }
+                }
+            }
             self.controls.push(entry);
 
             self.count = self.controls.len() as i32;

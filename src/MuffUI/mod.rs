@@ -1,5 +1,6 @@
 extern crate self as MuffUI;
 
+pub mod win;
 mod app;
 mod action;
 mod button;
@@ -19,6 +20,7 @@ mod text_box;
 mod window;
 pub mod utils;
 
+pub use win as Win;
 pub use app::*;
 pub use action::*;
 pub use button::*;
