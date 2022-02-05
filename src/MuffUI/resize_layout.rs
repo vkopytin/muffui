@@ -199,6 +199,12 @@ impl AnchorMap {
         true
     }
 
+    pub fn removeControl(&mut self, hwnd: Win::HWND) {
+        if let Some(index) = self.controls.iter().position(|c|c.hwnd == hwnd) {
+            self.controls.remove(index);
+        }
+    }
+
     pub fn isInitialized(&self) -> bool {
         self.isInitialized
     }

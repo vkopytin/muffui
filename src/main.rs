@@ -92,13 +92,33 @@ impl Renderable for MyView {
                 })
             ))
             ,
-            ForEach(self.vm.items.borrow().iter().map(|i|i.clone()).collect::<Vec<_>>(), |item, index|(
-                Panel::new([ControlId(300 + index), Anchor(ANF_LEFTRIGHT|ANF_TOP)]).posX(4).posY(45 + index * 29).height(27).width(400).content(||(
-                    CheckBox::new([SP::Title("Complete"), ControlId(400 + index), Anchor(ANF_TOP|ANF_LEFT)]).posX(4).width(80).posY(1).height(24)
-                    ,
-                    TextBox::new([SP::Title(item.as_str()), ControlId(400 + 2 * index), Anchor(ANF_TOP|ANF_LEFTRIGHT)]).posX(85).posY(1).width(200).height(24)
+            Panel::new([ControlId(203), Anchor(ANF_TOPBOTTOM|ANF_LEFTRIGHT)]).posX(4).posY(40).width(475).height(200).content(||
+                ForEach::new(self.vm.items.borrow().iter().map(|i|i.clone()).collect::<Vec<_>>(), |(id, name, isFinished), index|(
+                    Panel::new([ControlId(300 + index), Anchor(ANF_LEFTRIGHT|ANF_TOP)]).posX(4).posY(2 + index * 29).height(27).width(400).content(||(
+                        CheckBox::new([Selected(isFinished), SP::Title("Complete"), ControlId(400 + index), Anchor(ANF_TOP|ANF_LEFT)]).posX(4).width(80).posY(1).height(24).content({
+                            let vm = self.vm.clone();
+                            let name = name.clone();
+                            move|args: Vec<SharedProps>|{
+                                vm.updateToDo((id, name.clone(), !isFinished));
+                        }})
+                        ,
+                        TextBox::new([SP::Title(name.as_str()), ControlId(400 + 2 * index), Anchor(ANF_TOP|ANF_LEFTRIGHT)]).posX(85).posY(1).width(200).height(24).content({
+                            let vm = self.vm.clone();
+                            move|args: Vec<SharedProps>|{
+                                if let Some(Title(title)) = args.prop(&SP::Title("")) {
+                                    vm.updateToDo((id, title.to_string(), isFinished));
+                                }
+                            }
+                        })
+                        ,
+                        Button::new([SP::Title("Remove"), ControlId(400 + 3 * index), Anchor(ANF_TOP|ANF_RIGHT)]).posX(300).posY(1).width(60).height(22).content({
+                            let vm = self.vm.clone();
+                            move|_|{
+                                vm.removeToDo(id);
+                        }})
+                    ))
                 ))
-            ))
+            )
             ,
             Panel::new([SP::Title("testing title"), ControlId(104), Anchor(ANF_LEFT|ANF_BOTTOM|ANF_RIGHT)]).posX(4).posY(240).width(385).height(300).content(||(
                 Label::new([SP::Title("testing label"), ControlId(105), Anchor(ANF_TOP|ANF_LEFT), SP::FontFace("Monaco")]).posX(5).posY(5).width(125).height(25)

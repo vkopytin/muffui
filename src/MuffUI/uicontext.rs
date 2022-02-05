@@ -54,17 +54,39 @@ impl Eq for ControlInfo { }
 #[derive(Clone)]
 pub struct UIContext {
     pub items: HashMap<String, ControlInfo>,
+    pub prevItems: HashMap<String, ControlInfo>,
 }
 
 impl UIContext {
     pub fn new() -> Self {
         Self {
             items: HashMap::new(),
+            prevItems: HashMap::new(),
         }
     }
 
     pub fn create() -> Box<Self> {
         Box::new(Self::new())
+    }
+
+    pub fn clean(self: Box<Self>) -> Box<Self> {
+        let mut cleanKeys: Vec<String> = vec![];
+        let mut items = self.items.clone();
+        for (key, ci) in self.items.iter() {
+            if !self.prevItems.contains_key(key) {
+                cleanKeys.push(key.clone());
+                Win::DestroyWindow(ci.hwnd);
+            }
+        }
+
+        for key in cleanKeys {
+            items.remove(&key);
+        }
+
+        Box::new(UIContext {
+            items,
+            prevItems: self.prevItems
+        })
     }
 
     pub fn render<T: Renderable>(self: Box<Self>, parent: &str, index: &str, view: &T, msg: Option<Win::MSG>) -> Box<Self> {
@@ -77,6 +99,9 @@ impl UIContext {
 
             if let Some(ci) = controlInfo {
                 return Box::new(Self {
+                    prevItems: utils::merge(self.prevItems, HashMap::from([(String::from(index), ControlInfo {
+                        ..ci.clone()
+                    })])),
                     items: utils::merge(self.items.clone(), HashMap::from([(String::from(index), ControlInfo {
                         listeners,
                         ..ci.clone()
@@ -97,6 +122,9 @@ impl UIContext {
 
         match controlInfo {
             Some(controlInfo) => Box::new(Self {
+                prevItems: utils::merge(self.prevItems, HashMap::from([(String::from(index), ControlInfo {
+                    ..controlInfo.clone()
+                })])),
                 items: utils::merge(self.items.clone(), HashMap::from([(String::from(index), controlInfo)])),
                 ..*self
             }),
@@ -211,7 +239,7 @@ impl UIContext {
                     let rect = Win::GetWindowRect(am.parent);
                     am.handleAnchors(rect)
                 });
-                
+
                 hwnd
             }
         };

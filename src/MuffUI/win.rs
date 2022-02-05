@@ -115,7 +115,13 @@ extern "system" fn wndproc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPA
             },
             WM_DESTROY => {
                 //println!("WM_DESTROY");
-                PostQuitMessage(0);
+                AnchorMap::shared().try_lock().as_mut().ok().and_then(|am|{
+                    am.removeControl(hwnd);
+                    if am.parent == hwnd {
+                        PostQuitMessage(0);
+                    }
+                    Some(())
+                });
             },
             _ => {},
         }

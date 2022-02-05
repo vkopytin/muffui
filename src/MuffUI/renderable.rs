@@ -151,23 +151,39 @@ impl<A: Renderable, B: Renderable, C: Renderable, D: Renderable, E: Renderable, 
     }
 }
 
-pub struct ForEach<T, R: Renderable, F: Fn(&T, i32) -> R>(pub Vec<T>, pub F);
+pub struct ForEach<T: Renderable> {
+    pub children: Vec<T>,
+}
 
-impl<T, R: Renderable, F: Fn(&T, i32) -> R> Renderable for ForEach<T, R, F> {
+impl<T: Renderable> Renderable for ForEach<T> {
     fn childs(&self) -> Option<Rc<dyn Renderable>> {
         None
     }
 
     fn render(&self, context: Box<UIContext>, parent: &str, index: &str, msg: Option<Win::MSG>) -> Box<UIContext> {
         let mut idx = 0;
-        self.0.iter().fold(context, |res, item|{
-            let children = self.1(item, idx);
+        self.children.iter().fold(context, |res, item|{
+            let res = item.render(res, parent, &format!("{}[{}]", index, idx), msg);
             idx += 1;
-            children.render(res, parent, &format!("{}[{}]", index, idx), msg)
+            res
         })
     }
 
     fn toViewState(&self) -> Vec<SharedProps> {
         vec![]
+    }
+}
+
+impl<T: Renderable> ForEach<T> {
+    pub fn new<A>(items: Vec<A>, f: impl Fn(A, i32) -> T) -> Self {
+        let mut idx = 0;
+        let children = items.into_iter().map(|i|{
+            let res = f(i, idx);
+            idx += 1;
+            res
+        }).collect();
+        Self {
+            children,
+        }
     }
 }

@@ -2,6 +2,7 @@
 
 use std::sync::Once;
 use std::mem::MaybeUninit;
+use std::collections::HashMap;
 use std::sync::Mutex;
 use crate::Win;
 use crate::muffui::*;
@@ -44,10 +45,14 @@ impl App where Self: MainApp {
                     if let Some(msg) = msg {
                         let msg = msg.clone();
                         e.enqueueEvent(msg);
-                        context = view.render(context.clone(), "/", "0", Some(msg));
+                        let mut prev = context.clone();
+                        prev.prevItems = HashMap::new();
+                        context = view.render(prev, "/", "0", Some(msg));
+                        context = context.clone().clean();
                         for (_, ci) in context.items.iter() {
                             e.putListener(ci.hwnd, ci.listeners.clone());
                         }
+                        return;
                     }
                     if e.dispatchEvents() {
                         context = view.render(context.clone(), "/", "0", None);
