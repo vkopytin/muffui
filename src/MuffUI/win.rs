@@ -146,8 +146,6 @@ pub fn SetDefaultWindowProc(hwnd: HWND) -> bool {
 }
 
 pub fn CreateWindowEx(exStyle: WINDOW_EX_STYLE, style: WINDOW_STYLE, className: &str, parent: Option<HWND>, idx: i32, title: &str, x: i32, y: i32, width: i32, height: i32) -> HWND {
-    let x = if x > 0  { x } else { CW_USEDEFAULT };
-    let y = if y > 0 { y } else { CW_USEDEFAULT };
     let width = if width > 0 { width } else { CW_USEDEFAULT };
     let height = if height > 0 { height } else { CW_USEDEFAULT };
 

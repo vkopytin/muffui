@@ -39,7 +39,7 @@ impl Renderable for MyView {
             SP::ClassName("window#1"), ControlId(0), Anchor(ANF_DOCK_ALL), SP::Title("TODO: Example"), SP::FontFace("Monaco"),
             Width(500), Height(310)
         ]).content(||(
-            Panel::new([SP::Title("create new todo"), ControlId(103), Anchor(ANF_DOCK_TOP)]).posX(4).posY(4).width(475).height(35).content(||(
+            Panel::new([SP::Title("create new todo"), ControlId(103), Anchor(ANF_DOCK_TOP)]).posX(0).posY(0).width(484).height(35).content(||(
                 CheckBox::new([SP::Title("Mark All"), ControlId(102), Anchor(ANF_TOP|ANF_LEFT), Selected(allChecked)]).posX(5).posY(5).width(70).height(25).content(Command::new({
                     let vm = self.vm.clone();
                     move|event: Vec<SharedProps>| {
@@ -51,7 +51,7 @@ impl Renderable for MyView {
                 ,
                 Label::new([SP::Title("New todo title:")]).posX(76).posY(9).width(120).height(25)
                 ,
-                TextBox::new([ControlId(201), Anchor(ANF_TOP| ANF_LEFTRIGHT)]).title(newTitle).posX(160).posY(6).width(240).height(21).content({
+                TextBox::new([ControlId(201), Anchor(ANF_TOP| ANF_LEFTRIGHT)]).title(newTitle).posX(170).posY(6).width(260).height(21).content({
                     let newTitle = Rc::clone(&self.vm.newTitle);
                     move|event: Vec<SharedProps>|{
                         let mut newTitle = newTitle.borrow_mut();
@@ -61,7 +61,7 @@ impl Renderable for MyView {
                     }
                 })
                 ,
-                Button::new([SP::Title("Save"), ControlId(202), Anchor(ANF_TOP|ANF_RIGHT)]).posX(406).posY(4).width(40).height(24).content({
+                Button::new([SP::Title("Save"), ControlId(202), Anchor(ANF_TOP|ANF_RIGHT)]).posX(436).posY(4).width(40).height(24).content({
                     let vm = self.vm.clone();
                     move|_|vm.createToDo()
                 })
@@ -78,7 +78,7 @@ impl Renderable for MyView {
                                 vm.updateToDo((id, name.clone(), !isFinished));
                         }})
                         ,
-                        TextBox::new([SP::Title(name.as_str()), ControlId(400 + 2 * index), Anchor(ANF_TOP|ANF_LEFTRIGHT)]).posX(55).posY(1).width(240).height(24).content({
+                        TextBox::new([SP::Title(name.as_str()), ControlId(400 + 2 * index), Anchor(ANF_TOP|ANF_LEFTRIGHT)]).posX(55).posY(1).width(350).height(24).content({
                             let vm = self.vm.clone();
                             move|args: Vec<SharedProps>|{
                                 if let Some(Title(title)) = args.prop(&SP::Title("")) {
@@ -87,7 +87,7 @@ impl Renderable for MyView {
                             }
                         })
                         ,
-                        Button::new([SP::Title("Remove"), ControlId(400 + 3 * index), Anchor(ANF_TOP|ANF_RIGHT)]).posX(320).posY(1).width(60).height(22).content({
+                        Button::new([SP::Title("Remove"), ControlId(400 + 3 * index), Anchor(ANF_TOP|ANF_RIGHT)]).posX(406).posY(1).width(60).height(22).content({
                             let vm = self.vm.clone();
                             move|_|vm.removeToDo(id)
                         })
@@ -96,7 +96,7 @@ impl Renderable for MyView {
                 ))
             )
             ,
-            Panel::new([SP::Title("testing title"), ControlId(104), Anchor(ANF_DOCK_BOTTOM)]).posX(4).posY(240).width(500).height(28).content(||(
+            Panel::new([SP::Title("testing title"), ControlId(104), Anchor(ANF_DOCK_BOTTOM)]).posX(0).posY(243).width(484).height(28).content(||(
                 Label::new([SP::Title(format!("{} item left", self.vm.getCompleted()).as_str()), ControlId(105), Anchor(ANF_TOP|ANF_LEFT), SP::FontFace("Monaco")]).posX(5).posY(5).width(125).height(25)
                 ,
                 RadioBox::new([SP::Title("All"), ControlId(110), Anchor(ANF_TOP|ANF_LEFT), Selected(*showAll == 0)]).posX(130).posY(2).width(45).height(25).content({
@@ -114,7 +114,7 @@ impl Renderable for MyView {
                     move|_|vm.setShowAll(2)
                 })
                 ,
-                Button::new([SP::Title("Clear Completed"), ControlId(112), Anchor(ANF_TOP|ANF_RIGHT)]).posX(350).posY(2).width(120).height(25).content({
+                Button::new([SP::Title("Clear Completed"), ControlId(112), Anchor(ANF_TOP|ANF_RIGHT)]).posX(360).posY(2).width(118).height(23).content({
                     let vm = self.vm.clone();
                     move|_|vm.clearCompleted()
                 })

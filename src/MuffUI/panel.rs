@@ -44,10 +44,6 @@ impl Panel {
         let defaultProps = vec![
             SP::ClassName("panel#0x8002"),
             SP::Renderer("panel"),
-            PosX(0),
-            PosY(0),
-            Width(75),
-            Height(25)
         ];
         Self {
             props: defaultProps.merge(props.into()),
