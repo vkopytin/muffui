@@ -52,7 +52,6 @@ impl App where Self: MainApp {
                         for (_, ci) in context.items.iter() {
                             e.putListener(ci.hwnd, ci.listeners.clone());
                         }
-                        return;
                     }
                     if e.dispatchEvents() {
                         context = view.render(context.clone(), "/", "0", None);

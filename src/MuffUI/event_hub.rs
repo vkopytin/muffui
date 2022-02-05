@@ -245,6 +245,8 @@ impl EventHub {
                     },
                     SharedProps::DidClick(h) => {
                         let mut h = h.lock().unwrap();
+                        let selected = Win::IsSelected(e.hwnd);
+                        props.push(SharedProps::Selected(selected));
                         h.exec(props);
                         true
                     },
