@@ -18,7 +18,8 @@ This is how it works (TODO example):
 ![ToDO example](/media/how-it-works.gif?raw=true "ToDO example on MuffUI")
 
 The  solution has a small set of features.
-Implemented controls:
+
+# Implemented controls:
 * Window
 * Group box
 * Panel
@@ -33,7 +34,7 @@ Every control has the same set of settings. Such as:
 
 Implemented simple resize algorithm. A bit buggy. Works slow. But it works.
 
-Utilised design patterns:
+# Utilised design patterns:
 * ELM/Model View Update (MVU)
 * Observable (Event Hub)
 * Model View ViewModel (MVVM)
