@@ -29,7 +29,7 @@ Implemented controls:
 * Combobox (dropdown)
 
 Every control has the same set of settings. Such as:
-* PosX, PosY, Width, Height, Title, Control Index.
+* PosX, PosY, Width, Height, Title, Font face, Control index.
 
 Implemented simple resize algorithm. A bit buggy. Works slow. But it works.
 
@@ -43,3 +43,5 @@ Utilised design patterns:
 Declarative UI/declarative syntax is the future of UI development. It helps to build a UI that is easy to maintain, understand and extend.
 
 It could serve as a basis for multi OS supported UI. Such UI would be easy to backport to another platform/operating system.
+
+It is possible to expand current solution with the bigger set of features. Such as ability to change color, font settings, rendering with custom borders, tabs, etc.
