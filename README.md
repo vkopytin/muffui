@@ -38,6 +38,8 @@ Utilised design patterns:
 * Observable (Event Hub)
 * Model View ViewModel (MVVM)
 
-Conclusion:
+# Conclusion:
+
 Declarative UI/declarative syntax is the future of UI development. It helps to build a UI that is easy to maintain, understand and extend.
-It would help to build a nice platform for multi OS supported UI. Such UI would be easy to backport to another platform/operating system.
+
+It could serve as a basis for multi OS supported UI. Such UI would be easy to backport to another platform/operating system.
