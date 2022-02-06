@@ -31,7 +31,7 @@ Implemented controls:
 Every control has the same set of settings. Such as:
 * PosX, PosY, Width, Height, Title, Control Index.
 
-Implemented simple resize algorithm. A big buggy. Works slow. But it works.
+Implemented simple resize algorithm. A bit buggy. Works slow. But it works.
 
 Utilised design patterns:
 * ELM/Model View Update (MVU)
