@@ -24,7 +24,7 @@ The  solution has a small set of features.
 * Group box
 * Panel
 * Label
-* TextBox (Edit box)
+* Text (Edit box)
 * Radio box
 * Check box
 * Combobox (dropdown)
