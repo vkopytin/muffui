@@ -14,4 +14,4 @@ $cargo run
 ```
 
 This is how it works:
-![ToDO example](/media/hwo-it-works.gif?raw=true "ToDO example on MuffUI")
+![ToDO example](/media/how-it-works.gif?raw=true "ToDO example on MuffUI")
