@@ -13,6 +13,7 @@ macro_rules! if_then {
 use crate::Win;
 
 /// proportinally moves the control with the size of the window
+#[allow(dead_code)]
 pub const ANF_NONE: usize = 0x0000;
 /// docks the control to the top of the window
 pub const ANF_DOCK_TOP: usize =  0x0001;
@@ -74,6 +75,7 @@ pub const ANIF_CALCSIZE: usize =  0x0001;
 /// add a sizing-grip to the parent window
 pub const ANIF_SIZEGRIP: usize =  0x0002;
 
+#[derive(Debug)]
 struct FRECT {
     top: f32,
     left: f32,
@@ -101,11 +103,13 @@ impl Default for FRECT {
     }
 }
 
+#[derive(Debug)]
 struct FSIZE {
     cx: f32,
     cy: f32,
 }
 
+#[derive(Debug)]
 pub struct ControlEntry {
     controlId: i32,
     flags: usize,
@@ -113,6 +117,7 @@ pub struct ControlEntry {
     hwnd: Win::HWND,
 }
 
+#[derive(Debug)]
 pub struct AnchorMap {
     prev: Win::RECT,
     isInitialized: bool,
@@ -198,13 +203,13 @@ impl AnchorMap {
 
         true
     }
-
+    #[allow(dead_code)]
     pub fn removeControl(&mut self, hwnd: Win::HWND) {
         if let Some(index) = self.controls.iter().position(|c|c.hwnd == hwnd) {
             self.controls.remove(index);
         }
     }
-
+    #[allow(dead_code)]
     pub fn isInitialized(&self) -> bool {
         self.isInitialized
     }
@@ -306,7 +311,7 @@ impl AnchorMap {
                 Default::default(),
                 Win::WS_CHILD | Win::WS_VISIBLE | (Win::SBS_SIZEGRIP as Win::WINDOW_STYLE),
                 "ScrollBar", Some(parent), 0, "",
-                self.client.right - sz1.cx, self.client.bottom - sz1.cy, sz1.cx, sz1.cy
+                self.client.right - sz1.cx, self.client.bottom - sz1.cy, sz1.cx, sz1.cy, &0
             );
             unsafe {
                 Win::SetWindowPos(

@@ -28,9 +28,6 @@ impl Window {
             SP::ClassName("window"),
             Width(1024),
             Height(768),
-            DidResize(Arc::new(Mutex::new(Command::new(|_|{
-                println!("Window resize!!!!");
-            })))),
         ];
         Self {
             props: defaultProps.merge(props.into()),
@@ -65,14 +62,14 @@ impl Window {
             ..self
         }
     }
-
+    #[allow(dead_code)]
     pub fn didResize<C: Into<Command<Vec<SharedProps>>>>(self, handler: C) -> Self {
         Self {
             props: self.props.merge(SharedProps::DidResize(Arc::new(Mutex::new(handler.into())))),
             ..self
         }
     }
-
+    #[allow(dead_code)]
     pub fn content<A: 'static, B: 'static, C: 'static, D: 'static, E: 'static, F: 'static, G: 'static, T: 'static, FF>(self, mut children: FF) -> Self
         where
             A: Renderable,
@@ -107,6 +104,14 @@ impl Renderable for Window {
     }
 
     fn toViewState(&self) -> Vec<SharedProps> {
-        self.props.iter().map(|item|item.clone()).collect()
+        self.props.clone().merge([SP::DidResize({
+            let didResize = self.props.prop(&SP::DidResize(|_|{})).map(|d|d.clone());
+            move|props: Vec<SharedProps>|{
+                let didResize = didResize.clone();
+                if let Some(SharedProps::DidResize(didResize)) = didResize {
+                    didResize.lock().unwrap().exec(props.clone());
+                }
+            }
+        })])
     }
 }

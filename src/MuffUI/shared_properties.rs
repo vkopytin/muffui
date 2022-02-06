@@ -20,10 +20,13 @@ pub enum SharedProps {
     Selected(bool),
     SelectItems(Vec<String>),
     SelectedIndex(usize),
+    ClientRect((usize, usize, usize, usize)),
 
+    DidCreate(Arc<Mutex<Command<Vec<SharedProps>>>>),
     DidClick(Arc<Mutex<Command<Vec<SharedProps>>>>),
     DidChange(Arc<Mutex<Command<Vec<SharedProps>>>>),
     DidResize(Arc<Mutex<Command<Vec<SharedProps>>>>),
+    DidDestroy(Arc<Mutex<Command<Vec<SharedProps>>>>),
 }
 
 impl fmt::Debug for SharedProps {
@@ -42,10 +45,13 @@ impl fmt::Debug for SharedProps {
             SharedProps::Selected(t) => write!(f, "Selected({})", t),
             SharedProps::SelectItems(t) => write!(f, "SelectItems({:?})", t),
             SharedProps::SelectedIndex(t) => write!(f, "SelectedIndex({})", t),
+            SharedProps::ClientRect((x,y,w,h)) => write!(f, "ClientRect({},{},{},{})",x,y,w,h),
 
+            SharedProps::DidCreate(_) => write!(f, "fn:didCreate"),
             SharedProps::DidChange(_) => write!(f, "fn:didChange"),
             SharedProps::DidClick(_) => write!(f, "fn:didClick"),
             SharedProps::DidResize(_) => write!(f, "fn:didResize"),
+            SharedProps::DidDestroy(_) => write!(f, "fn:didDestroy"),
         }
     }
 }
@@ -71,9 +77,24 @@ impl SP {
     pub fn FontFace(face: &str) -> SharedProps {
         SharedProps::FontFace(Rc::from(face))
     }
+    pub fn ClientRect(x: usize, y: usize, width: usize, height: usize) -> SharedProps {
+        SharedProps::ClientRect((x, y, width, height))
+    }
+
+    #[allow(dead_code)]
+    pub fn DidCreate<C: Into<Command<Vec<SharedProps>>>>(handler: C) -> SharedProps {
+        SharedProps::DidCreate(Arc::new(Mutex::new(handler.into())))
+    }
     #[allow(dead_code)]
     pub fn DidChange<C: Into<Command<Vec<SharedProps>>>>(handler: C) -> SharedProps {
         SharedProps::DidChange(Arc::new(Mutex::new(handler.into())))
+    }
+    #[allow(dead_code)]
+    pub fn DidResize<C: Into<Command<Vec<SharedProps>>>>(handler: C) -> SharedProps {
+        SharedProps::DidResize(Arc::new(Mutex::new(handler.into())))
+    }
+    pub fn DidDestroy<C: Into<Command<Vec<SharedProps>>>>(handler: C) -> SharedProps {
+        SharedProps::DidDestroy(Arc::new(Mutex::new(handler.into())))
     }
 }
 

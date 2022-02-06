@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 extern crate self as Win;
 
+use std::sync::Arc;
 use core::ffi::c_void;
 pub use windows::{
     core::Error,
@@ -96,11 +97,33 @@ pub fn RegisterClass(className: &str) -> ATOM {
 extern "system" fn wndproc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM) -> LRESULT {
 
     unsafe {
-        Notifier::shared().try_lock().ok().as_mut().map(|e|e.notify(
-            Some(MSG { hwnd, message, wParam, lParam, time: 0, pt: POINT { x:0, y:0 } })
-        ));
-
         match message as u32 {
+            WM_GETMINMAXINFO => {
+            },
+            WM_NCCREATE => {
+                let param: &CREATESTRUCTA = unsafe {
+                    let LPARAM(lParam) = lParam;
+                    let closurePointer = lParam as *const core::ffi::c_void;
+                    &*(closurePointer as *const _)
+                };
+                let args: &(usize, i32, Option<HWND>) = unsafe {
+                    let closurePointer = param.lpCreateParams as *const core::ffi::c_void;
+                    &*(closurePointer as *const _)
+                };
+                let (dock, idx, parent) = args;
+            },
+            WM_CREATE => {
+                let param: &CREATESTRUCTA = unsafe {
+                    let LPARAM(lParam) = lParam;
+                    let closurePointer = lParam as *const core::ffi::c_void;
+                    &*(closurePointer as *const _)
+                };
+                let args: &(usize, i32, Option<HWND>) = unsafe {
+                    let closurePointer = param.lpCreateParams as *const core::ffi::c_void;
+                    &*(closurePointer as *const _)
+                };
+                let (dock, idx, parent) = args;
+            },
             WM_PAINT => {
                 //println!("WM_PAINT");
 
@@ -110,21 +133,15 @@ extern "system" fn wndproc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPA
                 EndPaint(hwnd, &ps);
             },
             WM_SIZE | WM_SIZING => {
-                let rect = GetWindowRect(hwnd);
-                AnchorMap::shared().try_lock().as_mut().ok().and_then(|am|am.handleAnchors(rect));
-            },
-            WM_DESTROY => {
-                //println!("WM_DESTROY");
-                AnchorMap::shared().try_lock().as_mut().ok().and_then(|am|{
-                    am.removeControl(hwnd);
-                    if am.parent == hwnd {
-                        PostQuitMessage(0);
-                    }
-                    Some(())
-                });
+                AnchorMap::shared().try_lock().as_mut().ok().and_then(|am|am.handleAnchors(None));
             },
             _ => {},
         }
+
+        Arc::get_mut(Notifier::shared()).map(|e|e.notify(
+            Some(MSG { hwnd, message, wParam, lParam, time: 0, pt: POINT { x:0, y:0 } })
+        ));
+
         DefWindowProcA(hwnd, message, wParam, lParam)
     }
 }
@@ -132,7 +149,7 @@ extern "system" fn wndproc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPA
 pub fn SetDefaultWindowProc(hwnd: HWND) -> bool {
     extern "system" fn customWinProc(hwnd: HWND, message: u32, wParam: WPARAM, lParam: LPARAM, _uidsubclass: usize, _dwrefdata: usize) -> LRESULT {
         unsafe {
-            Notifier::shared().try_lock().ok().as_mut().map(|e|e.notify(
+            Arc::get_mut(Notifier::shared()).map(|e|e.notify(
                 Some(MSG { hwnd, message, wParam, lParam, time: 0, pt: POINT { x:0, y:0 } })
             ));
 
@@ -145,7 +162,7 @@ pub fn SetDefaultWindowProc(hwnd: HWND) -> bool {
     }
 }
 
-pub fn CreateWindowEx(exStyle: WINDOW_EX_STYLE, style: WINDOW_STYLE, className: &str, parent: Option<HWND>, idx: i32, title: &str, x: i32, y: i32, width: i32, height: i32) -> HWND {
+pub fn CreateWindowEx<P>(exStyle: WINDOW_EX_STYLE, style: WINDOW_STYLE, className: &str, parent: Option<HWND>, idx: i32, title: &str, x: i32, y: i32, width: i32, height: i32, args: &P) -> HWND {
     let width = if width > 0 { width } else { CW_USEDEFAULT };
     let height = if height > 0 { height } else { CW_USEDEFAULT };
 
@@ -165,7 +182,7 @@ pub fn CreateWindowEx(exStyle: WINDOW_EX_STYLE, style: WINDOW_STYLE, className: 
             parent,
             HMENU(idx as isize),
             instance,
-            std::ptr::null_mut(),
+            args as *const _ as *const _ as *const c_void,
         );
 
         hwnd
@@ -218,18 +235,14 @@ pub fn SetUserData<T>(hwnd: HWND, data: &T) -> isize {
     }
 }
 
-pub fn GetWindowText(hwnd: HWND) -> Option<String> {
+pub fn GetWindowText(hwnd: HWND) -> String {
     unsafe {
         let size = GetWindowTextLengthW(hwnd) as usize;
         let mut text: Vec<u16> = vec![0u16; size + 1];
         let len = GetWindowTextW(hwnd, PWSTR(text.as_mut_ptr()), size as _);
         let text = String::from_utf16_lossy(&text[..len as usize]);
 
-        if text.is_empty() {
-            None
-        } else {
-            Some(text)
-        }
+        text
     }
 }
 
@@ -636,5 +649,11 @@ pub fn SelectGetItems(hwnd: HWND) -> Vec<String> {
         }
 
         items
+    }
+}
+
+pub fn PostQuitMessage(res: i32) {
+    unsafe {
+        windows::Win32::UI::WindowsAndMessaging::PostQuitMessage(res)
     }
 }

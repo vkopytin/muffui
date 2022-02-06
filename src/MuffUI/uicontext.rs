@@ -75,6 +75,7 @@ impl UIContext {
         for (key, ci) in self.items.iter() {
             if !self.prevItems.contains_key(key) {
                 cleanKeys.push(key.clone());
+                AnchorMap::shared().try_lock().as_mut().ok().map(|am|am.removeControl(ci.hwnd));
                 Win::DestroyWindow(ci.hwnd);
             }
         }
@@ -139,7 +140,9 @@ impl UIContext {
             let isListener = match prop {
                 SharedProps::DidResize(_)
                 | SharedProps::DidClick(_)
-                | SharedProps::DidChange(_) => true,
+                | SharedProps::DidChange(_)
+                | SharedProps::DidDestroy(_)
+                | SharedProps::DidCreate(_) => true,
                 _ => false,
             };
 
@@ -229,15 +232,15 @@ impl UIContext {
             _ => {
                 let hwnd = Win::CreateWindowEx(
                     exStyle, style, format!("{}\0", className).as_str(), parent, idx, &title,
-                    posX, posY, width, height
+                    posX, posY, width, height,
+                    &(dock, idx, parent)
                 );
                 if &*renderer == "group-box" {
                     Win::SetDefaultWindowProc(hwnd);
                 }
                 AnchorMap::shared().lock().as_mut().ok().and_then(|am|{
                     am.addControl(idx, dock, Some(hwnd));
-                    let rect = Win::GetWindowRect(am.parent);
-                    am.handleAnchors(rect)
+                    am.handleAnchors(None)
                 });
 
                 hwnd
@@ -247,7 +250,11 @@ impl UIContext {
         if let Some(oldClassName) = Win::GetClassName(hwnd) {
             if oldClassName != &*className {
                 if Win::DestroyWindow(hwnd) {
-                    hwnd = Win::CreateWindowEx(exStyle, style, format!("{}\0", className).as_str(), parent, idx, &title, posX, posY, width, height);
+                    hwnd = Win::CreateWindowEx(
+                        exStyle, style, format!("{}\0", className).as_str(), parent, idx, &title,
+                        posX, posY, width, height,
+                        &(dock, idx, parent)
+                    );
                 }
             }
         }
@@ -261,10 +268,8 @@ impl UIContext {
             });
         hFont = hFont.or_else(||Win::SetWindowFontFace(hwnd, &fontFace));
 
-        if let Some(oldTitle) = Win::GetWindowText(hwnd) {
-            if oldTitle != &*title {
-                Win::SetWindowText(hwnd, &title);
-            }
+        if &*title != Win::GetWindowText(hwnd) {
+            Win::SetWindowText(hwnd, &title);
         }
 
         if isSelected != Win::IsSelected(hwnd) {
@@ -291,8 +296,6 @@ impl UIContext {
             AnchorMap::shared().lock().as_mut().ok().and_then(|am|am.initialize(
                 hwnd, ANF_TOP | ANF_LEFT | ANF_RIGHT
             ));
-            let rect = Win::GetWindowRect(hwnd);
-            AnchorMap::shared().lock().as_mut().ok().and_then(|am|am.handleAnchors(rect));
             isInitialized += 1;
         } else if isInitialized > 2 {
             isInitialized = 2;

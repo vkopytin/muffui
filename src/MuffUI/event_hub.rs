@@ -10,6 +10,7 @@ use crate::Win;
 #[derive(Clone)]
 pub struct EventInfo {
     pub hwnd: Win::HWND,
+    pub parent: Win::HWND,
     pub listeners: Vec<SharedProps>,
     pub props: Vec<SharedProps>,
     pub target: Win::HWND,
@@ -26,17 +27,26 @@ impl From<Win::MSG> for EventInfo {
         //let className = Win::GetClassName(msg.hwnd);
         let empty = Self {
             hwnd: Win::HWND(0),
+            parent: Win::HWND(0),
             listeners: vec![],
             props: vec![],
             target: Win::HWND(0),
         };
         let defaultEvent = Self {
             hwnd: msg.hwnd,
+            parent: Win::HWND(0),
             listeners: vec![],
             props: vec![],
             target: msg.hwnd,
         };
         match msg.message {
+            Win::WM_CREATE => {
+                let sp = SharedProps::DidCreate(Arc::from(Mutex::from(Command::new(|_|{}))));
+                Self {
+                    listeners: vec![sp],
+                    ..defaultEvent
+                }
+            },
             Win::WM_SIZE | Win::WM_SIZING => {
                 let sp = SharedProps::DidResize(Arc::from(Mutex::from(Command::new(|_|{}))));
                 Self {
@@ -121,6 +131,14 @@ impl From<Win::MSG> for EventInfo {
                     ..defaultEvent
                 }  
             },
+            Win::WM_DESTROY => {
+                let sp = SharedProps::DidDestroy(Arc::from(Mutex::from(Command::new(|_|{}))));
+                let listeners = vec![sp];
+                Self {
+                    listeners,
+                    ..defaultEvent
+                }    
+            },
             _ => {
                 //println!("MSG: {:?}", msg);
                 empty
@@ -170,21 +188,24 @@ impl EventHub {
         }
         let mut currentHwnd = event.hwnd;
         while currentHwnd != Win::HWND(0) {
+            let parent = Win::GetParent(currentHwnd);
             // Create events with bubble events (For Select/CompoBox edit control)
             if let Some(e) = self.events.iter_mut().find(|e|e.hwnd == currentHwnd) {
                 let props = e.props.clone();
                 let listeners = e.listeners.clone();
                 e.listeners = listeners.merge(event.listeners.clone());
                 e.props = props.merge(event.props.clone());
+                e.parent = parent;
                 e.hwnd = currentHwnd;
             } else {
                 let copyEvent = EventInfo {
                     hwnd: currentHwnd,
+                    parent,
                     ..event.clone()
                 };
                 self.events.push(copyEvent);
             }
-            currentHwnd = Win::GetParent(currentHwnd);
+            currentHwnd = parent;
         }
     }
 
@@ -193,7 +214,9 @@ impl EventHub {
             let isListener = match listener {
                 SharedProps::DidResize(_)
                 | SharedProps::DidClick(_)
-                | SharedProps::DidChange(_) => true,
+                | SharedProps::DidChange(_)
+                | SharedProps::DidDestroy(_)
+                | SharedProps::DidCreate(_) => true,
                 _ => false,
             };
             if !isListener {
@@ -216,14 +239,28 @@ impl EventHub {
             if let Some(cn) = className {
                 props.push(SP::ClassName(&cn));
             }
-            if let Some(newTitle) = Win::GetWindowText(e.hwnd) {
-                props.push(SP::Title(&newTitle));
-            }
+            let newTitle = Win::GetWindowText(e.hwnd);
+            props.push(SP::Title(&newTitle));
+
             for l in clonned.iter() {
                 let mut props = props.clone();
                 res = match l {
+                    SharedProps::DidCreate(h) => {
+                        let rect = Win::GetWindowRect(e.hwnd)
+                            .and_then(|r|AnchorMap::ScreenToClient(e.parent, &r))
+                            .unwrap_or(Win::RECT { ..Default::default() });
+                        props.push(SharedProps::PosX(rect.left));
+                        props.push(SharedProps::PosY(rect.top));
+                        props.push(SharedProps::Width(rect.right - rect.left));
+                        props.push(SharedProps::Height(rect.bottom - rect.top));
+
+                        let mut h = h.lock().unwrap();
+                        h.exec(props);
+                        true
+                    },
                     SharedProps::DidResize(h) => {
                         let rect = Win::GetWindowRect(e.hwnd)
+                            .and_then(|r|AnchorMap::ScreenToClient(e.parent, &r))
                             .unwrap_or(Win::RECT { ..Default::default() });
                         props.push(SharedProps::PosX(rect.left));
                         props.push(SharedProps::PosY(rect.top));
@@ -247,6 +284,11 @@ impl EventHub {
                         let mut h = h.lock().unwrap();
                         let selected = Win::IsSelected(e.hwnd);
                         props.push(SharedProps::Selected(selected));
+                        h.exec(props);
+                        true
+                    },
+                    SharedProps::DidDestroy(h) => {
+                        let mut h = h.lock().unwrap();
                         h.exec(props);
                         true
                     },
@@ -282,18 +324,18 @@ impl<E> Notifier<E> {
 }
 
 pub trait NotifierExt {
-    fn shared() -> &'static Mutex<Notifier<Option<Win::MSG>>>;
+    fn shared() -> &'static mut Arc<Notifier<Option<Win::MSG>>>;
 }
 
 impl NotifierExt for Notifier<Option<Win::MSG>> {
-    fn shared() -> &'static Mutex<Notifier<Option<Win::MSG>>> {
-        static mut CONF: MaybeUninit<Mutex<Notifier<Option<Win::MSG>>>> = MaybeUninit::uninit();
+    fn shared() -> &'static mut Arc<Notifier<Option<Win::MSG>>> {
+        static mut CONF: MaybeUninit<Arc<Notifier<Option<Win::MSG>>>> = MaybeUninit::uninit();
         static ONCE: Once = Once::new();
     
         ONCE.call_once(|| unsafe {
-            CONF.as_mut_ptr().write(Mutex::new(Notifier::new()));
+            CONF.as_mut_ptr().write(Arc::new(Notifier::new()));
         });
 
-        unsafe { &*CONF.as_ptr() }
+        unsafe { &mut *CONF.as_mut_ptr() }
     }
 }

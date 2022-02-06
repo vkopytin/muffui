@@ -37,7 +37,7 @@ impl Renderable for MyView {
 
         Some(Rc::from(Window::new([
             SP::ClassName("window#1"), ControlId(0), Anchor(ANF_DOCK_ALL), SP::Title("TODO: Example"), SP::FontFace("Monaco"),
-            Width(500), Height(310)
+            Width(500), Height(310), SP::DidDestroy(|_|Win::PostQuitMessage(0))
         ]).content(||(
             Panel::new([SP::Title("create new todo"), ControlId(103), Anchor(ANF_DOCK_TOP)]).posX(0).posY(0).width(484).height(35).content(||(
                 CheckBox::new([SP::Title("Mark All"), ControlId(102), Anchor(ANF_TOP|ANF_LEFT), Selected(allChecked)]).posX(5).posY(5).width(70).height(25).content(Command::new({

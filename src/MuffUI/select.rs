@@ -42,6 +42,7 @@ impl Renderable for Select {
 }
 
 impl Select {
+    #[allow(dead_code)]
     pub fn new<T: Into<Vec<SharedProps>>>(props: T) -> Self {
         let defaultProps = vec![
             SP::ClassName("ComboBox"),
@@ -59,35 +60,35 @@ impl Select {
             ..self
         }
     }
-
+    #[allow(dead_code)]
     pub fn posX(self, posX: i32) -> Self {
         Self {
             props: self.props.merge(PosX(posX)),
             ..self
         }
     }
-
+    #[allow(dead_code)]
     pub fn posY(self, posY: i32) -> Self {
         Self {
             props: self.props.merge(PosY(posY)),
             ..self
         }
     }
-
+    #[allow(dead_code)]
     pub fn width(self, width: i32) -> Self {
         Self {
             props: self.props.merge(Width(width)),
             ..self
         }
     }
-
+    #[allow(dead_code)]
     pub fn height(self, height: i32) -> Self {
         Self {
             props: self.props.merge(Height(height)),
             ..self
         }
     }
-
+    #[allow(dead_code)]
     pub fn didChange<C: Into<Command<Vec<SharedProps>>>>(self, handler: C) -> Self {
         Self {
             props: self.props.merge(SharedProps::DidChange(Arc::new(Mutex::new(handler.into())))),

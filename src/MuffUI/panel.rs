@@ -35,7 +35,7 @@ impl Renderable for Panel {
     }
 
     fn toViewState(&self) -> Vec<SharedProps> {
-        self.props.iter().map(|item|item.clone()).collect()
+        self.props.clone()
     }
 }
 

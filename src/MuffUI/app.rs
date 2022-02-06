@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 
+use std::sync::Arc;
 use std::sync::Once;
 use std::mem::MaybeUninit;
 use std::collections::HashMap;
@@ -40,7 +41,7 @@ impl App where Self: MainApp {
         let mut context = UIContext::create();
         if let Some(view) = self.view() {
             context = view.render(context, "/", "0", None);
-            Notifier::shared().try_lock().ok().as_mut().map(|e|e.register(move|msg|{
+            Arc::get_mut(Notifier::shared()).map(|e|e.register(move|msg|{
                 EventHub::shared().try_lock().ok().as_mut().map(|e|{
                     if let Some(msg) = msg {
                         let msg = msg.clone();
@@ -67,10 +68,10 @@ impl App where Self: MainApp {
                     Win::TranslateMessage(&mut msg);
                     Win::DispatchMessage(&mut msg);
 
-                    Notifier::shared().try_lock().ok().as_mut().map(|e|e.notify(Some(msg)));
+                    Arc::get_mut(Notifier::shared()).map(|e|e.notify(Some(msg)));
                 } else {
                     std::thread::sleep(std::time::Duration::from_millis(100));
-                    Notifier::shared().try_lock().ok().as_mut().map(|e|e.notify(None));
+                    Arc::get_mut(Notifier::shared()).map(|e|e.notify(None));
                 }
             }
         }
