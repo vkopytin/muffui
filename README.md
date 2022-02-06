@@ -1,7 +1,7 @@
 # MuffUI
 Experimental UI framework for windows GUI API (win32). To build windows applications with the developer experience similar to recent web technologies. Implemented with Rust programming language. In the form of declarative layout syntax.
 
-This is the proof of concept project. Declarative UI. For the Rust language. To check how would be developer experience if use UI implemented with the model view update/mvvm. Global variables oriented development.
+This is the proof of concept project. Declarative UI. For the Rust language. To check how would be developing experience if use UI implemented with the model view update/mvvm. Global variables oriented development.
 
 To build project exec:
 ```
