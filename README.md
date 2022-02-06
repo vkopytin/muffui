@@ -13,5 +13,6 @@ To run project exec:
 $cargo run
 ```
 
-This is how it works:
+This is how it works (TODO example):
+
 ![ToDO example](/media/how-it-works.gif?raw=true "ToDO example on MuffUI")
